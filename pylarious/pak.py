@@ -51,6 +51,7 @@ def unpack(source, target = None, filter = None):
         
     fileTable = readFileTable(primaryArchiveFile, header)
     for fileRecord in fileTable:
+        if filter is not None and not filter(fileRecord): continue
         path, offset, size, unknown, archiveFileIndex = fileRecord
         
         if archiveFileIndex == 0:
