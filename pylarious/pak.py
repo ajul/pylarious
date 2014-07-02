@@ -31,5 +31,43 @@ def readFileTable(f, header):
         
     return list(readFileRecords(f))
     
-def unpack(path):
-    pass
+def unpack(source, target = None, filter = None):
+    """ 
+    filter: a function that takes a file record and returns True iff the file is to be unpacked.
+    """
+    if target is None:
+        target, _ = os.path.split(source)
+    
+    primaryArchiveFile = open(source, "rb")
+    header = readHeader(primaryArchiveFile)
+    version, dataOffset, archiveFileCount, fileTableLength, headerUnkown, fileCount = header
+    
+    # open all other archive files
+    archiveFiles = [primaryArchiveFile]
+    sourceRoot, sourceExt = os.path.splitext(source)
+    for i in range(1, archiveFileCount):
+        path = "%s_%d%s" % (sourceRoot, i, sourceExt)
+        archiveFiles.append(open(path, "rb"))
+        
+    fileTable = readFileTable(primaryArchiveFile, header)
+    for fileRecord in fileTable:
+        path, offset, size, unknown, archiveFileIndex = fileRecord
+        
+        if archiveFileIndex == 0:
+            offset += dataOffset
+        
+        archiveFile = archiveFiles[archiveFileIndex]
+        archiveFile.seek(offset)
+        fileData = archiveFile.read(size)
+        
+        outPath = os.path.join(target, path)
+        outHead, outTail = os.path.split(outPath)
+        os.makedirs(outHead, exist_ok = True)
+        outFile = open(outPath, "wb")
+        outFile.write(fileData)
+        outFile.close()
+        
+        print('Extracted file "%s" (%u bytes)' % (path, size))
+        
+    for f in archiveFiles:
+        f.close()
