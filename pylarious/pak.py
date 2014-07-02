@@ -33,6 +33,7 @@ def readFileTable(f, header):
     
 def unpack(source, target = None, filter = None):
     """ 
+    Unpacks the primary PAK file at source to target. If target is not given, it unpacks into the source's directory.
     filter: a function that takes a file record and returns True iff the file is to be unpacked.
     """
     if target is None:
