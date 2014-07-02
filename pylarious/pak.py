@@ -5,7 +5,10 @@ HEADER_LENGTH = 21
 
 def readHeader(f):
     """
-    # version, dataOffset, archiveFileCount, fileTableLength, unknown, fileCount
+    Reads a header from an open file f.
+    f is assumed to be at the start of the file.
+    Returns a tuple
+    version, dataOffset, archiveFileCount, fileTableLength, unknown, fileCount
     """
     
     headerBytes = f.read(HEADER_LENGTH)
@@ -20,6 +23,12 @@ def readHeader(f):
 FILE_RECORD_LENGTH = 272
         
 def readFileTable(f, header):
+    """
+    Reads a file table format from an open file f given a header.
+    f is assumed to be at the start of the file table.
+    Returns a list of fileRecords. Each fileRecord is a tuple
+    path, offset, size, unknown, archiveFileIndex
+    """
     version, dataOffset, archiveFileCount, fileTableLength, unknown, fileCount = header
     
     def readFileRecords(f):
