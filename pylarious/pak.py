@@ -1,5 +1,6 @@
 import os
 import struct
+import zlib
 
 HEADER_LENGTH = 21
 
@@ -8,14 +9,14 @@ def readHeader(f):
     Reads a header from an open file f.
     f is assumed to be at the start of the file.
     Returns a tuple
-    version, dataOffset, archiveFileCount, fileTableLength, unknown, fileCount
+    version, dataOffset, archiveFileCount, fileTableLength, endianness, fileCount
     """
     
     headerBytes = f.read(HEADER_LENGTH)
     
     header = struct.unpack("<LLLL?L", headerBytes)
     
-    if header[0] == 7:
+    if header[0] in (7, 9):
         return header
     else:
         raise IOError("PAK version number %d not supported!" % header[0])
@@ -27,16 +28,16 @@ def readFileTable(f, header):
     Reads a file table format from an open file f given a header.
     f is assumed to be at the start of the file table.
     Returns a list of fileRecords. Each fileRecord is a tuple
-    path, offset, size, unknown, archiveFileIndex
+    path, offset, size, endianness, archiveFileIndex
     """
-    version, dataOffset, archiveFileCount, fileTableLength, unknown, fileCount = header
+    version, dataOffset, archiveFileCount, fileTableLength, endianness, fileCount = header
     
     def readFileRecords(f):
         for i in range(fileCount):
             recordBytes = f.read(FILE_RECORD_LENGTH)
-            path, offset, size, unknown, archiveFileIndex = struct.unpack("<256sLLLL", recordBytes)
+            path, offset, size, endianness, archiveFileIndex = struct.unpack("<256sLLLL", recordBytes)
             path, _ = path.decode('ascii').split("\0", 1)
-            yield (path, offset, size, unknown, archiveFileIndex)
+            yield (path, offset, size, endianness, archiveFileIndex)
         
     return list(readFileRecords(f))
     
@@ -50,7 +51,7 @@ def unpack(source, target = None, filter = None):
     
     primaryArchiveFile = open(source, "rb")
     header = readHeader(primaryArchiveFile)
-    version, dataOffset, archiveFileCount, fileTableLength, headerUnkown, fileCount = header
+    version, dataOffset, archiveFileCount, fileTableLength, endianness, fileCount = header
     
     # open all other archive files
     archiveFiles = [primaryArchiveFile]
@@ -62,14 +63,18 @@ def unpack(source, target = None, filter = None):
     fileTable = readFileTable(primaryArchiveFile, header)
     for fileRecord in fileTable:
         if filter is not None and not filter(fileRecord): continue
-        path, offset, size, unknown, archiveFileIndex = fileRecord
+        path, offset, size, compressedSize, archiveFileIndex = fileRecord
         
         if archiveFileIndex == 0:
             offset += dataOffset
         
         archiveFile = archiveFiles[archiveFileIndex]
         archiveFile.seek(offset)
-        fileData = archiveFile.read(size)
+        
+        if compressedSize != 0:
+            fileData = zlib.decompress(archiveFile.read(compressedSize))
+        else:
+            fileData = archiveFile.read(size)
         
         outPath = os.path.join(target, path)
         outHead, outTail = os.path.split(outPath)

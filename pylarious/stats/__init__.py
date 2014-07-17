@@ -5,6 +5,7 @@ class Entry():
         self.internalName = internalName
         self.data = {}
         self.usingList = []
+        self.type = None
         
     def using(self, other):
         self.usingList.append(other)
@@ -29,11 +30,11 @@ def parseEntries(lines):
                 entry = Entry(internalName)
                 result[internalName] = entry
         elif tokens[0] == "type":
-            continue #TODO
+            entry.type = tokens[1]
         elif tokens[0] == "using":
             entry.using(result[tokens[1]])
         elif tokens[0] == "data":
-            entry.data[tokens[1]] = tokens[2].split(',')
+            entry.data[tokens[1]] = tokens[2]
     return result
     
 class Deltamod():

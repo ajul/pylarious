@@ -13,18 +13,19 @@ def getModData(entry):
             for flag in v:
                 effect += "* %s\n" % flag
         elif k == "DamageFromBase":
-            effect += "* %s%% extra damage as %s\n" % (v[0], entry.getData("Damage Type")[0])
+            effect += "* %s%% extra damage as %s\n" % (v, entry.getData("Damage Type")[0])
         elif k == "ExtraProperties":
-            effect += "* %s%% chance to apply %s for %s turns\n" % (v[1], v[0], v[2])
+            status, chance, duration = v.split(",")
+            effect += "* %s%% chance to apply %s for %s turns\n" % (chance, status, duration)
         elif k in ("Air", "Earth", "Fire", "Water", "Poison", "Shadow"):
-            effect += "* %s%% %s resistance\n" % (int(v[0]) * 5 - 5, k)
+            effect += "* %s%% %s resistance\n" % (int(v) * 5 - 5, k)
         elif k == "Shield":
             effect += "* %s%% chance to block\n" % v[0]
         else:
             if k in ("DamageBoost", "CriticalChance"):
-                effect += "* %s%% %s\n" % (v[0], k)
+                effect += "* %s%% %s\n" % (v, k)
             else:
-                effect += "* %s %s\n" % (v[0], k)
+                effect += "* %s %s\n" % (v, k)
     return value, effect
 
 itemFiles = [
@@ -90,7 +91,7 @@ shieldTable += "|}"
 weaponTable = '{|class = "wikitable sortable"\n'
 weaponTable += '! Internal name !! Affixes !! Weapon Type !! Boost Type !! Value !! Effect\n'
 
-# armor mods
+# weapon mods
 for internalName, deltamod in deltamods.items():
     if deltamod.getParam("ModifierType") == "Weapon":
         totalValue = 0
