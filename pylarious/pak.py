@@ -41,13 +41,11 @@ def readFileTable(f, header):
         
     return list(readFileRecords(f))
     
-def unpack(source, target = None, filter = None):
+def unpackArchive(source, filter = None, encoding = None):
     """ 
-    Unpacks the primary PAK file at source to target. If target is not given, it unpacks into the source's directory.
-    filter: a function that takes a file record and returns True iff the file is to be unpacked.
+    Iterates over the files in an archive.
+    filter: a function that takes a file record and returns True iff the file is to be unpacked
     """
-    if target is None:
-        target, _ = os.path.split(source)
     
     primaryArchiveFile = open(source, "rb")
     header = readHeader(primaryArchiveFile)
@@ -62,8 +60,9 @@ def unpack(source, target = None, filter = None):
         
     fileTable = readFileTable(primaryArchiveFile, header)
     for fileRecord in fileTable:
-        if filter is not None and not filter(fileRecord): continue
         path, offset, size, compressedSize, archiveFileIndex = fileRecord
+        
+        if callable(filter) and not filter(fileRecord): continue
         
         if archiveFileIndex == 0:
             offset += dataOffset
@@ -75,6 +74,26 @@ def unpack(source, target = None, filter = None):
             fileData = zlib.decompress(archiveFile.read(compressedSize))
         else:
             fileData = archiveFile.read(size)
+            
+        if encoding is not None:
+            fileData = fileData.decode(encoding)
+        
+        print('Extracted file "%s" (%u bytes)' % (path, size))
+        yield fileRecord, fileData
+        
+    for f in archiveFiles:
+        f.close()
+    
+def unpackArchiveToFiles(source, target = None, filter = None):
+    """ 
+    Unpacks the primary PAK file at source to target directory. If target is not given, it unpacks into the source's directory.
+    filter: a function that takes a file record and returns True iff the file is to be unpacked
+    """
+    if target is None:
+        target, _ = os.path.split(source)
+    
+    for fileRecord, fileData in unpackArchive(source, filter):
+        path, offset, size, compressedSize, archiveFileIndex = fileRecord
         
         outPath = os.path.join(target, path)
         outHead, outTail = os.path.split(outPath)
@@ -82,8 +101,3 @@ def unpack(source, target = None, filter = None):
         outFile = open(outPath, "wb")
         outFile.write(fileData)
         outFile.close()
-        
-        print('Extracted file "%s" (%u bytes)' % (path, size))
-        
-    for f in archiveFiles:
-        f.close()

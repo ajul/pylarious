@@ -18,8 +18,8 @@ for file in itemFiles:
     itemData.update(pylarious.stats.parseEntries(f))
     f.close()
 
-armorTable = '{|class = "wikitable sortable"\n'
-armorTable += '! Internal name !! Requirements !! Slot !! Armor type !! Armor defense value !! Resistance !! Movement !! Initiative !! Durability \n'
+armorTable = '{|class = "wikitable sortable mw-collapsible mw-collapsed"\n'
+armorTable += '! Internal name !! Requirements !! Slot !! Armour type !! Armour rating !! Durability !! Bonuses \n'
 
 # armor mods
 for internalName, item in itemData.items():
@@ -31,13 +31,27 @@ for internalName, item in itemData.items():
         armorTable += "| %s \n" % item.getData("Slot")
         armorTable += "| %s \n" % (item.getData("ArmorType") or "")
         armorTable += "| %s \n" % item.getData("Armor Defense Value")
-        armorTable += "| %d \n" % (int(item.getData("Air")) * 5)
-        armorTable += "| %s \n" % (item.getData("Movement") or "")
-        armorTable += "| %s \n" % (item.getData("Initiative") or "")
         armorTable += "| %d \n" % (int(item.getData("Durability") or "0") * 10)
+
+        armorTable += "| "
+        hasBoost = False
+        for k, v in sorted(item.getAllData().items()):
+            if k in ("Requirements", "Slot", "ArmorType", "Armor Defense Value", "Durability", "DurabilityDegradeSpeed", "Weight",
+                     "InventoryTab", "ComboCategory", "ModifierType", "ItemColor", "Value",
+                     "Act", "Act part"): continue
+            if v == "0": continue
+            hasBoost = True
+            if k in ("Air", "Earth", "Fire", "Water", "Poison", "Shadow"):
+                armorTable += "%d%% %s resistance" % (5 * int(v), k)
+            else:
+                armorTable += "%s %s" % (v, k)
+            armorTable += "<br/>"
+        if hasBoost:
+            armorTable = armorTable[:-5]
+        armorTable += "\n"
 armorTable += "|}"
 
-shieldTable = '{|class = "wikitable sortable"\n'
+shieldTable = '{|class = "wikitable sortable mw-collapsible mw-collapsed"\n'
 shieldTable += '! Internal name !! Requirements !! Blocking !! Movement !! Durability \n'
 
 # shield mods
@@ -52,7 +66,7 @@ for internalName, item in itemData.items():
         shieldTable += "| %d \n" % (int(item.getData("Durability") or "0") * 10)
 shieldTable += "|}"
 
-weaponTable = '{|class = "wikitable sortable"\n'
+weaponTable = '{|class = "wikitable sortable mw-collapsible mw-collapsed"\n'
 weaponTable += '! Internal name !! Requirements !! Weapon type !! AP Cost !! Damage !! Damage Range !! Damage Boost !! Damage Type '
 weaponTable += '!! Critical Chance !! Critical Damage !! Durability \n'
 
@@ -74,7 +88,7 @@ for internalName, item in itemData.items():
         weaponTable += "| %d \n" % (int(item.getData("Durability") or "0") * 10)
 weaponTable += "|}"
 
-skillTable = '{|class = "wikitable sortable"\n'
+skillTable = '{|class = "wikitable sortable mw-collapsible mw-collapsed"\n'
 skillTable += '! Internal name !! AP Cost !! Damage !! Damage Multiplier !! Damage Range\n'
 
 # skills
@@ -92,4 +106,4 @@ for internalName, item in itemData.items():
         skillTable += "| %s \n" % item.getData("Damage Range")
 skillTable += "|}"
 
-print(skillTable)
+print(armorTable)

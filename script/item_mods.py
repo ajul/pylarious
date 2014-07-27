@@ -1,8 +1,10 @@
 import _setpath
 import os
+import pylarious.pak
 import pylarious.stats
 
-statDir = "out/extract/Public/Main/Stats/Generated/"
+source = "D:/Steam/steamapps/common/Divinity - Original Sin/Data/Main.pak"
+statDir = "Public/Main/Stats/Generated/"
 
 def getModData(entry):
     value = (entry.getData("Value") or ["0"])[0]
@@ -45,8 +47,8 @@ f = open(os.path.join(statDir, "DeltaModifier.txt"))
 deltamods = pylarious.stats.parseDeltamods(f)
 f.close()
 
-armorTable = '{|class = "wikitable sortable"\n'
-armorTable += '! Internal name !! Affixes !! Slot !! Armor Type !! Boost Type !! Value !! Effect\n'
+armorTable = '{|class = "wikitable sortable mw-collapsible mw-collapsed"\n'
+armorTable += '! Internal name !! Affixes !! Slot !! Armour Type !! Boost Type !! Value !! Effect\n'
 
 
 # armor mods
@@ -68,7 +70,7 @@ for internalName, deltamod in deltamods.items():
         armorTable += "| \n%s" % totalEffect
 armorTable += "|}"
 
-shieldTable = '{|class = "wikitable sortable"\n'
+shieldTable = '{|class = "wikitable sortable mw-collapsible mw-collapsed"\n'
 shieldTable += '! Internal name !! Affixes !! Boost Type !! Value !! Effect\n'
 
 # shield mods
@@ -88,7 +90,7 @@ for internalName, deltamod in deltamods.items():
         shieldTable += "| \n%s" % totalEffect
 shieldTable += "|}"
 
-weaponTable = '{|class = "wikitable sortable"\n'
+weaponTable = '{|class = "wikitable sortable mw-collapsible mw-collapsed"\n'
 weaponTable += '! Internal name !! Affixes !! Weapon Type !! Boost Type !! Value !! Effect\n'
 
 # weapon mods
